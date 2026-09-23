@@ -19,6 +19,20 @@ def keep_alive():
 # เรียกใช้งานฟังก์ชันเปิดเว็บจำลอง
 keep_alive()
 
+import discord
+from discord.ext import commands
+import asyncio
+
+import discord
+from discord.interactions import Interaction
+import requests
+import random
+import json
+import asyncio
+import os
+from discord.ui import Button, View, Modal
+from discord import app_commands, ui
+
 import nextcord
 import json 
 from nextcord.ext import commands, tasks
@@ -43,8 +57,436 @@ owner_user = "jarya_dang"
 COLOR = 0xffb6c1  # สีชมพูอ่อนพาสเทลเข้ากับ Waguri
 hosting_name = 'แหนม'
 
+
+
 # 🎞️ ลิงก์ภาพเคลื่อนไหวเมนูเซฟยศ
 Animated_Image = 'https://cdn.discordapp.com/attachments/1168170116383522817/1552008477432356874/kaoruko-waguri-waguri-kaoruko.gif?ex=6ab40c07&is=6ab2ba87&hm=523ce1235101c280bd85f9136400e28ff3f815b04b6ba82b706023269fcf70ec&'
+# สมมติว่าใน waguribot.py ของคุณมีตัวแปร bot อยู่แล้ว เช่น:
+# bot = commands.Bot(command_prefix="!", intents=intents)
+
+
+# สร้างโฟลเดอร์ casino_data อัตโนมัติหากยังไม่มี
+os.makedirs("casino_data", exist_ok=True)
+
+# โหลดข้อมูลจาก config.json
+with open("config.json", "r", encoding="utf-8") as file:
+    config = json.load(file)
+
+admin_name = config.get('admin_name', 'jarya_dang')
+server_id = int(config.get('server_id', 0))
+
+MYGUILD = discord.Object(id=server_id)
+
+class MyClient(discord.Client):
+    def __init__(self, *, intents: discord.Intents):
+        super().__init__(intents=intents)
+        self.tree = app_commands.CommandTree(self)
+
+    async def setup_hook(self):
+        self.tree.copy_global_to(guild=MYGUILD)
+        await self.tree.sync(guild=MYGUILD)
+
+intents = discord.Intents.default()
+client = MyClient(intents=intents)
+
+class shopping_discord(discord.ui.Modal, title="วางเดิมพัน"):
+    num = discord.ui.TextInput(
+        label="NUMBER", 
+        placeholder=f"กรอกหมายเลข 1 - {config.get('bet', 5)}", 
+        required=True, 
+        max_length=2, 
+        style=discord.TextStyle.short
+    )
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        user = interaction.user
+        file_path = f"casino_data/{user.name}.json"
+        
+        try:
+            val = int(self.num.value)
+            bet_limit = int(config.get('bet', 5))
+            
+            if val > bet_limit or val < 1:
+                embed = discord.Embed(title="❌ ไม่สามารถเดิมพันได้", description=f"กรุณากรอกหมายเลขระหว่าง 1 - {bet_limit}", color=0xFCE5CD)
+                await interaction.followup.send(embed=embed, ephemeral=True)
+                return
+
+            result = random.randint(1, bet_limit)
+            log_channel = discord.utils.get(interaction.guild.channels, id=int(config.get('log', 0)))
+            
+            # โหลดเงินปัจจุบัน
+            balance = 0.0
+            if os.path.exists(file_path):
+                with open(file_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    balance = float(data.get(user.name, {}).get('amount', 0.0))
+
+            if val == result:
+                reward = float(config.get('reward', 10))
+                newtotal = balance + reward
+                
+                with open(file_path, "w", encoding="utf-8") as f:
+                    json.dump({user.name: {"id": str(user.id), "amount": newtotal}}, f, indent=4)
+                    
+                embed = discord.Embed(title="✅ ยินดีด้วยคุณได้รับรางวัล", description=f"หมายเลขที่ออกคือ : {result} || ได้รับเงินรางวัลรวม {reward:.2f} บาท !!", color=0xFCE5CD)
+                await interaction.followup.send(embed=embed, ephemeral=True)
+                
+                if log_channel:
+                    embeds = discord.Embed(title=f"✅ <@{user.id}> ได้รับรางวัล!", description=f"ทายเลข: {val}\nชนะและได้รับรางวัลรวม {reward:.2f} บาท", color=0xFCE5CD)
+                    embeds.set_footer(text=f"ยอดเงินคงเหลือ : {newtotal:.2f} บาท")
+                    await log_channel.send(embed=embeds)
+            else:
+                deduct = float(config.get('deduct', 5))
+                newtotal = max(0.0, balance - deduct)
+                
+                with open(file_path, "w", encoding="utf-8") as f:
+                    json.dump({user.name: {"id": str(user.id), "amount": newtotal}}, f, indent=4)
+                    
+                embed = discord.Embed(title="❌ คุณไม่ได้รับรางวัล", description=f"เนื่องจากหมายเลขที่ออกคือ : {result} || ขอแสดงความเสียใจ!", color=0xFCE5CD)
+                await interaction.followup.send(embed=embed, ephemeral=True)
+                
+                if log_channel:
+                    embeds = discord.Embed(title=f"❌ <@{user.id}> ไม่ได้รับรางวัล!", description=f"ทายเลข: {val} เลขที่ออก: {result}\nแพ้และเสียเงินจำนวน -{deduct:.2f} บาท", color=0xFCE5CD)
+                    embeds.set_footer(text=f"ยอดเงินคงเหลือ : {newtotal:.2f} บาท")
+                    await log_channel.send(embed=embeds)
+
+        except Exception as e:
+            embed = discord.Embed(title="❌ เกิดข้อผิดพลาด", description="รูปแบบข้อมูลไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง", color=0xFCE5CD)
+            await interaction.followup.send(embed=embed, ephemeral=True)
+
+class topup(discord.ui.Modal, title="เติมเงินเข้ากระเป๋า"):
+    link_angpao = discord.ui.TextInput(label="เติมเงินเข้ากระเป๋าสำหรับเดิมพัน", placeholder="ลิ้งค์อั่งเปาของคุณ 💸 | URL", required=True, max_length=100, style=discord.TextStyle.short)
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        user = interaction.user
+        try:
+            response = requests.post(
+                "https://restapi.kdkddmdmdd.repl.co/undefined_store/topupwallet", 
+                json={"mobile": str(config.get('phone')), "link": str(self.link_angpao.value)}
+            ).json()
+            
+            if response.get("status") == True:
+                money_amount = float(response["amount"])
+                file_path = f"casino_data/{user.name}.json"
+                
+                amount = 0.0
+                if os.path.exists(file_path):
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                        amount = float(data.get(user.name, {}).get('amount', 0.0))
+                
+                newamount = amount + money_amount
+                with open(file_path, "w", encoding="utf-8") as f:
+                    json.dump({user.name: {"id": str(user.id), "amount": newamount}}, f, indent=4)
+                    
+                embed = discord.Embed(title="✅ เติมเงินเข้ากระเป๋าสำเร็จ", description=f"เติมเงินเข้ากระเป๋าเรียบร้อยแล้วจำนวนเงิน {money_amount:.2f} บาท", color=0xFCE5CD)
+                await interaction.followup.send(embed=embed, ephemeral=True)
+                
+                log_channel = discord.utils.get(interaction.guild.channels, id=int(config.get('log', 0)))
+                if log_channel:
+                    embeds = discord.Embed(title=f"✅ <@{user.id}> เติมเงินสำเร็จ!", description=f"เติมเงินสำเร็จแล้วจำนวน: {money_amount:.2f} บาท", color=0xFCE5CD)
+                    await log_channel.send(embed=embeds)
+            elif response.get("reason") == "VOUCHER_NOT_FOUND":
+                embed = discord.Embed(title="❌ เติมเงินไม่สำเร็จ", description="ซองอั่งเปานี้ไม่มีอยู่กรุณาลองใหม่อีกครั้ง !", color=0xFCE5CD)
+                await interaction.followup.send(embed=embed, ephemeral=True)
+            else:
+                embed = discord.Embed(title="❌ เติมเงินไม่สำเร็จ", description="เนื่องจากซองอั่งเปานี้ได้รับเงินไปแล้ว !", color=0xFCE5CD)
+                await interaction.followup.send(embed=embed, ephemeral=True)
+        except Exception as e:
+            embed = discord.Embed(title="❌ เกิดข้อผิดพลาด", description="ไม่สามารถเชื่อมต่อกับระบบเติมเงินได้", color=0xFCE5CD)
+            await interaction.followup.send(embed=embed, ephemeral=True)
+
+class getmoney(discord.ui.Modal, title="ถอนเงิน"):
+    phone1 = discord.ui.TextInput(label="ทรูมันนี่วอเล็ต", placeholder="เบอร์", required=True, max_length=10, style=discord.TextStyle.short)
+    withdraw1 = discord.ui.TextInput(label=f"ถอนเงิน (ขั้นต่ำ {config.get('withdraw', 30)} บาท)", placeholder="จำนวนการถอนเงิน", required=True, max_length=10, style=discord.TextStyle.short)
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        user = interaction.user
+        file_path = f"casino_data/{user.name}.json"
+        
+        try:
+            req_amount = float(self.withdraw1.value)
+            min_withdraw = float(config.get('withdraw', 30))
+            
+            if req_amount < min_withdraw:
+                embed = discord.Embed(title="❌ ไม่สามารถทำรายการถอนเงินได้", description=f"ขั้นต่ำการถอนเงินคือ {min_withdraw:.2f} บาท !!", color=0xFCE5CD)
+                await interaction.followup.send(embed=embed, ephemeral=True)
+                return
+
+            if not os.path.exists(file_path):
+                embed = discord.Embed(title="❌ ไม่พบเครดิตของคุณ", description="กรุณาเปิดบัญชีหรือเติมเงินก่อนใช้งาน", color=0xFCE5CD)
+                await interaction.followup.send(embed=embed, ephemeral=True)
+                return
+
+            with open(file_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                balance = float(data.get(user.name, {}).get('amount', 0.0))
+
+            if req_amount > balance:
+                embed = discord.Embed(title="❌ ไม่สามารถทำรายการถอนเงินได้", description=f"ยอดเงินคงเหลือไม่เพียงพอ (ยอดเงินคงเหลือ: {balance:.2f} บาท)", color=0xFCE5CD)
+                await interaction.followup.send(embed=embed, ephemeral=True)
+            else:
+                low = balance - req_amount
+                with open(file_path, "w", encoding="utf-8") as f:
+                    json.dump({user.name: {"id": str(user.id), "amount": low}}, f, indent=4)
+                    
+                embed = discord.Embed(title="✅ เพิ่มรายการถอนเงินแล้ว", description=f"รายการถอนเงินจำนวน : {req_amount:.2f} บาท ถอนเข้าเบอร์วอเล็ต : {self.phone1.value}", color=0xFCE5CD)
+                await interaction.followup.send(embed=embed, ephemeral=True)
+                
+                log_channel = discord.utils.get(interaction.guild.channels, id=int(config.get('log', 0)))
+                if log_channel:
+                    embedlog = discord.Embed(title=f"✅ <@{user.id}> ถอนเงิน", description=f"ผู้ใช้ <@{user.id}> ได้ทำการขอถอนเงินจำนวน **{req_amount:.2f} บาท** เบอร์ **{self.phone1.value}**", color=0xFCE5CD)
+                    await log_channel.send(embed=embedlog)
+        except Exception as e:
+            embed = discord.Embed(title="❌ ไม่สามารถถอนเงินได้", description="รูปแบบการถอนเงินไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง!", color=0xFCE5CD)
+            await interaction.followup.send(embed=embed, ephemeral=True)
+
+class transfer(discord.ui.Modal, title="โอนเงิน"):
+    name = discord.ui.TextInput(label="ชื่อบัญชีผู้รับเงิน", placeholder="กรอกชื่อคนที่จะโอนให้", required=True, max_length=40, style=discord.TextStyle.short)
+    count = discord.ui.TextInput(label="จำนวนเงิน", placeholder="กรอกจำนวนเงินที่ต้องการโอน", required=True, max_length=10, style=discord.TextStyle.short)
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        user = interaction.user
+        sender_file = f"casino_data/{user.name}.json"
+        receiver_file = f"casino_data/{self.name.value}.json"
+        
+        try:
+            transfer_amount = float(self.count.value)
+            if not os.path.exists(receiver_file):
+                embed = discord.Embed(title="❌ ไม่สามารถโอนเงินได้", description=f"ไม่พบบัญชี {self.name.value} ในระบบ!", color=0xFCE5CD)
+                await interaction.followup.send(embed=embed, ephemeral=True)
+                return
+
+            if not os.path.exists(sender_file):
+                embed = discord.Embed(title="❌ ไม่สามารถโอนเงินได้", description="ไม่พบเครดิตของคุณ กรุณาเติมเงินก่อนโอน!", color=0xFCE5CD)
+                await interaction.followup.send(embed=embed, ephemeral=True)
+                return
+
+            with open(sender_file, "r", encoding="utf-8") as f:
+                sender_data = json.load(f)
+                sender_balance = float(sender_data.get(user.name, {}).get('amount', 0.0))
+
+            if sender_balance < transfer_amount:
+                embed = discord.Embed(title="❌ ไม่สามารถโอนเงินได้", description="ยอดเงินคงเหลือไม่เพียงพอ!", color=0xFCE5CD)
+                embed.set_footer(text=f"ยอดเงินคงเหลือ : {sender_balance:.2f} บาท")
+                await interaction.followup.send(embed=embed, ephemeral=True)
+            else:
+                new_sender_balance = sender_balance - transfer_amount
+                with open(sender_file, "w", encoding="utf-8") as f:
+                    json.dump({user.name: {"id": str(user.id), "amount": new_sender_balance}}, f, indent=4)
+
+                with open(receiver_file, "r", encoding="utf-8") as f:
+                    rec_data = json.load(f)
+                    rec_balance = float(rec_data.get(self.name.value, {}).get('amount', 0.0))
+                    rec_id = rec_data.get(self.name.value, {}).get('id', '')
+
+                new_rec_balance = rec_balance + transfer_amount
+                with open(receiver_file, "w", encoding="utf-8") as f:
+                    json.dump({self.name.value: {"id": rec_id, "amount": new_rec_balance}}, f, indent=4)
+
+                embed = discord.Embed(title="✅ โอนเงินสำเร็จแล้ว !", description=f"จาก: {user.name}\nโอนไปยัง: {self.name.value}\nจำนวนเงิน: {transfer_amount:.2f} บาท", color=0xFCE5CD)
+                embed.set_footer(text=f"ยอดเงินคงเหลือ : {new_sender_balance:.2f} บาท")
+                await interaction.followup.send(embed=embed, ephemeral=True)
+
+                log_channel = discord.utils.get(interaction.guild.channels, id=int(config.get('log', 0)))
+                if log_channel:
+                    embeds = discord.Embed(title=f"<@{user.id}> โอนเงินสำเร็จ", description=f"โอนไปยัง: {self.name.value}\nจำนวนเงิน: {transfer_amount:.2f} บาท", color=0xFCE5CD)
+                    await log_channel.send(embed=embeds)
+        except Exception as e:
+            embed = discord.Embed(title="❌ ไม่สามารถโอนเงินได้", description="รูปแบบข้อมูลไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง!", color=0xFCE5CD)
+            await interaction.followup.send(embed=embed, ephemeral=True)
+
+class CasinoButtons(View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+class CasinoButtons(View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="เริ่มเดิมพัน", style=discord.ButtonStyle.green, emoji="💎", custom_id="btn_bet")
+    async def btn_bet_cb(self, interaction: discord.Interaction, button: Button):
+        if interaction.response.is_done():
+            return
+        user = interaction.user
+        file_path = f"casino_data/{user.name}.json"
+        if not os.path.exists(file_path):
+            embed = discord.Embed(title="❌ ไม่สามารถเดิมพันได้", description="ไม่พบเครดิตของคุณ กรุณาเปิดบัญชีหรือเติมเงินก่อนเดิมพัน!", color=0xFCE5CD)
+            try:
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            except discord.NotFound:
+                pass
+            return
+
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            balance = float(data.get(user.name, {}).get('amount', 0.0))
+
+        deduct_limit = int(config.get('deduct', 5))
+        if balance < deduct_limit:
+            embed = discord.Embed(title="❌ ไม่สามารถเดิมพันได้", description=f"ยอดเงินคงเหลือไม่เพียงพอ กรุณาเติมเงินเข้ากระเป๋าขั้นต่ำ {deduct_limit} บาท ขึ้นไป", color=0xFCE5CD)
+            try:
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            except discord.NotFound:
+                pass
+        else:
+            try:
+                await interaction.response.send_modal(shopping_discord())
+            except discord.NotFound:
+                pass
+
+    @discord.ui.button(label="เติมเงินเข้ากระเป๋า", style=discord.ButtonStyle.green, emoji="💰", custom_id="btn_topup")
+    async def btn_topup_cb(self, interaction: discord.Interaction, button: Button):
+        if interaction.response.is_done():
+            return
+        try:
+            await interaction.response.send_modal(topup())
+        except discord.NotFound:
+            pass
+
+    @discord.ui.button(label="เช็คยอดเงิน", style=discord.ButtonStyle.green, emoji="💳", custom_id="btn_balance")
+    async def btn_balance_cb(self, interaction: discord.Interaction, button: Button):
+        if interaction.response.is_done():
+            return
+        user = interaction.user
+        file_path = f"casino_data/{user.name}.json"
+        try:
+            if os.path.exists(file_path):
+                with open(file_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    balance = float(data.get(user.name, {}).get('amount', 0.0))
+                embed = discord.Embed(title="กระเป๋าตังค์ของคุณ", description=f"ยอดเงินคงเหลือ : {balance:.2f} บาท", color=0xFCE5CD)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            else:
+                embed = discord.Embed(title="❌ ไม่พบเครดิตของคุณ", description=f"**name : {user.name}\nuid : {user.id}**\nไม่พบเครดิตของคุณ กรุณาเปิดบัญชี/เติมเงินก่อนเดิมพัน!", color=0xFCE5CD)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+        except discord.NotFound:
+            pass
+
+    @discord.ui.button(label="ถอนเงิน", style=discord.ButtonStyle.green, emoji="💸", custom_id="btn_withdraw")
+    async def btn_withdraw_cb(self, interaction: discord.Interaction, button: Button):
+        if interaction.response.is_done():
+            return
+        user = interaction.user
+        file_path = f"casino_data/{user.name}.json"
+        try:
+            if os.path.exists(file_path):
+                with open(file_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    balance = float(data.get(user.name, {}).get('amount', 0.0))
+                min_withdraw = float(config.get('withdraw', 30))
+                if balance < min_withdraw:
+                    embed = discord.Embed(title="❌ ไม่สามารถถอนเงินได้", description=f"ยอดเงินของคุณไม่เพียงพอสำหรับการถอนเงิน (ขั้นต่ำ {min_withdraw:.2f} บาท)", color=0xFCE5CD)
+                    await interaction.response.send_message(embed=embed, ephemeral=True)
+                else:
+                    await interaction.response.send_modal(getmoney())
+            else:
+                embed = discord.Embed(title="❌ ไม่สามารถถอนเงินได้", description="ไม่พบเครดิตของคุณกรุณาเติมเงินก่อนถอนเงิน !", color=0xFCE5CD)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+        except discord.NotFound:
+            pass
+
+    @discord.ui.button(label="เปิดบัญชี", style=discord.ButtonStyle.green, emoji="📝", custom_id="btn_open_acc")
+    async def btn_open_cb(self, interaction: discord.Interaction, button: Button):
+        if interaction.response.is_done():
+            return
+        user = interaction.user
+        file_path = f"casino_data/{user.name}.json"
+        try:
+            if os.path.exists(file_path):
+                embed = discord.Embed(title="❌ ไม่สามารถเปิดบัญชีได้", description="เนื่องจากคุณมีบัญชีอยู่แล้ว กรุณาเติมเงินเข้ากระเป๋าเพื่อเดิมพัน !", color=0xFCE5CD)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            else:
+                with open(file_path, "w", encoding="utf-8") as f:
+                    json.dump({user.name: {"id": str(user.id), "amount": 0.0}}, f, indent=4)
+                embed = discord.Embed(title="✅ เปิดบัญชีสำเร็จแล้ว !", description=f"**เปิดบัญชีสำเร็จ**\nuid : {user.id}\nname : {user.name}\nยอดเงินคงเหลือ : 0.00 บาท", color=0xFCE5CD)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+        except discord.NotFound:
+            pass
+
+    @discord.ui.button(label="โอนเงิน", style=discord.ButtonStyle.green, emoji="🔄", custom_id="btn_transfer")
+    async def btn_transfer_cb(self, interaction: discord.Interaction, button: Button):
+        if interaction.response.is_done():
+            return
+        user = interaction.user
+        file_path = f"casino_data/{user.name}.json"
+        try:
+            if os.path.exists(file_path):
+                await interaction.response.send_modal(transfer())
+            else:
+                embed = discord.Embed(title="❌ ไม่สามารถโอนเงินได้", description="ไม่พบเครดิตของคุณกรุณาเติมเงินก่อนโอนเงิน !", color=0xFCE5CD)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+        except discord.NotFound:
+            pass
+            
+    print(f'We have logged in as {clien
+
+# ---------------------------------------------------------
+# 1. โค้ดส่วนระบบ Ticket
+# ---------------------------------------------------------
+class CloseView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="🔒 ปิด Ticket", style=discord.ButtonStyle.danger, custom_id="close_ticket_btn")
+    async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("กำลังปิดห้องนี้ใน 5 วินาที...", ephemeral=False)
+        await asyncio.sleep(5)
+        try:
+            await interaction.channel.delete()
+        except Exception as e:
+            print(f"เกิดข้อผิดพลาดในการลบห้อง: {e}")
+
+class TicketView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="🎫 เปิด Ticket", style=discord.ButtonStyle.primary, custom_id="open_ticket_btn")
+    async def create_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        guild = interaction.guild
+        member = interaction.user
+
+        existing_channel = discord.utils.get(guild.text_channels, name=f"ticket-{member.name.lower()}")
+        if existing_channel:
+            await interaction.response.send_message(f"คุณมีห้อง Ticket เปิดอยู่แล้ว: {existing_channel.mention}", ephemeral=True)
+            return
+
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(view_channel=False),
+            member: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True),
+            guild.me: discord.PermissionOverwrite(view_channel=True, send_messages=True, manage_channels=True)
+        }
+
+        category = interaction.channel.category
+        ticket_channel = await guild.create_text_channel(
+            name=f"ticket-{member.name}",
+            category=category,
+            overwrites=overwrites,
+            topic=f"Ticket ของ {member.id}"
+        )
+
+        embed = discord.Embed(
+            title="support ticket",
+            description=f"สวัสดีคุณ {member.mention} ทีมงานจะเข้ามาช่วยเหลือโดยเร็วที่สุด\nกรุณาพิมพ์แจ้งปัญหาของคุณไว้ได้เลยครับ",
+            color=discord.Color.green()
+        )
+        await ticket_channel.send(embed=embed, view=CloseView())
+        await interaction.response.send_message(f"สร้างห้อง Ticket ให้คุณแล้วครับ: {ticket_channel.mention}", ephemeral=True)
+
+@bot.command(name="setup_ticket")
+@commands.has_permissions(administrator=True)
+async def setup_ticket(ctx):
+    embed = discord.Embed(
+        title="ระบบแจ้งปัญหา / ติดต่อทีมงาน (Support Ticket)",
+        description="กดปุ่มด้านล่างนี้เพื่อเปิดห้องพูดคุยกับทีมงานส่วนตัวครับ",
+        color=discord.Color.blue()
+    )
+    await ctx.send(embed=embed, view=TicketView())
+    await ctx.message.delete()
 
 # ==========================================
 # 🛡️ ระบบกันยิงดิส & แอนตี้สแปม (ลบข้อความย้อนหลัง + Timeout 15 วิ)
