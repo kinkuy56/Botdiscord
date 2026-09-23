@@ -1,0 +1,11 @@
+{
+	"TOKEN" = os.getenv('DISCORD_TOKEN'),
+	"admin_name": "jarya_dang",
+	"phone": "0801015915",
+	"log": "1551609093058465885",
+	"server_id": "1551460858197053502",
+	"bet": 5,
+	"withdraw": 30,
+	"deduct": 5,
+	"reward": 10
+}
