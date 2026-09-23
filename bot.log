@@ -1,0 +1,25 @@
+nohup: ignoring input
+[2026-09-19 04:56:51] [WARNING ] discord.ext.commands.bot: Privileged message content intent is missing, commands may not work as expected.
+[2026-09-19 04:56:51] [INFO    ] discord.client: logging in using static token
+[2026-09-19 04:56:51] [INFO    ] discord.client: logging in using static token
+[2026-09-19 04:56:52] [INFO    ] discord.client: logging in using static token
+[2026-09-19 04:56:53] [INFO    ] discord.gateway: Shard ID None has connected to Gateway (Session ID: 8ace5153567356faaff32d6b08c757cc).
+[2026-09-19 04:56:53] [INFO    ] discord.gateway: Shard ID None has connected to Gateway (Session ID: 664e354d3b9a2acaf7628c121bcffdc5).
+[2026-09-19 04:56:54] [INFO    ] discord.gateway: Shard ID None has connected to Gateway (Session ID: c59a985918c81afe432728528f494b5d).
+[2026-09-19 05:01:30] [WARNING ] discord.gateway: Shard ID None has stopped responding to the gateway. Closing and restarting.
+[2026-09-19 05:01:30] [WARNING ] discord.gateway: Shard ID None has stopped responding to the gateway. Closing and restarting.
+[2026-09-19 05:01:31] [INFO    ] discord.gateway: Shard ID None session has been invalidated.
+[2026-09-19 05:01:31] [INFO    ] discord.gateway: Shard ID None session has been invalidated.
+[2026-09-19 05:01:31] [INFO    ] discord.gateway: Shard ID None session has been invalidated.
+[2026-09-19 05:01:37] [INFO    ] discord.gateway: Shard ID None has connected to Gateway (Session ID: eb0a0eae124a5bbb57bbb690dc876d6f).
+[2026-09-19 05:01:38] [INFO    ] discord.gateway: Shard ID None has connected to Gateway (Session ID: 207048bbfe19f0169167102c537bebe3).
+[2026-09-19 05:01:38] [INFO    ] discord.gateway: Shard ID None has connected to Gateway (Session ID: cbbf41eeb420d489dcb45f682bebf954).
+[2026-09-19 05:09:04] [WARNING ] discord.gateway: Shard ID None has stopped responding to the gateway. Closing and restarting.
+[2026-09-19 05:09:04] [WARNING ] discord.gateway: Shard ID None has stopped responding to the gateway. Closing and restarting.
+[2026-09-19 05:09:04] [WARNING ] discord.gateway: Shard ID None has stopped responding to the gateway. Closing and restarting.
+[2026-09-19 05:09:05] [INFO    ] discord.gateway: Shard ID None session has been invalidated.
+[2026-09-19 05:09:05] [INFO    ] discord.gateway: Shard ID None session has been invalidated.
+[2026-09-19 05:09:05] [INFO    ] discord.gateway: Shard ID None session has been invalidated.
+[2026-09-19 05:09:11] [INFO    ] discord.gateway: Shard ID None has connected to Gateway (Session ID: 215e4c8699d44edcf43acd878ea1aaa7).
+[2026-09-19 05:09:11] [INFO    ] discord.gateway: Shard ID None has connected to Gateway (Session ID: 51bc0a7d790c562ea890c49c4613da72).
+[2026-09-19 05:09:11] [INFO    ] discord.gateway: Shard ID None has connected to Gateway (Session ID: 96965ff032f85b10dea8af54f50011b5).
