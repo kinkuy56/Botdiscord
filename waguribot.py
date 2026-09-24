@@ -1,4 +1,4 @@
-from flask import Flask
+ลิงก์ภาพเคลื่อนไหวเมนูเซฟยศN flask import Flask
 from threading import Thread
 import os
 
@@ -51,7 +51,7 @@ intents.bans = True
 bot = commands.Bot(command_prefix=".", intents=intents)
 
 # CONFIG Main
-TOKEN = os.getenv('DISCORD_TOKEN')
+token = os.getenv('DISCORD_TOKEN')
 
 owner_user = "jarya_dang"
 COLOR = 0xffb6c1  # สีชมพูอ่อนพาสเทลเข้ากับ Waguri
@@ -957,4 +957,4 @@ async def on_ready():
     except Exception as e:
         print(f"Failed to sync commands: {e}")
 
-bot.run(TOKEN)
+bot.run(token)
