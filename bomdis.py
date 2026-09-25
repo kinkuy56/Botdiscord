@@ -9,6 +9,13 @@ import random
 import re
 import json
 from datetime import timezone
+import os
+
+from dotenv import load_dotenv
+from dotenv import load_dotenv
+
+# โหลดค่าจากไฟล์ .env
+load_dotenv()
 
 try:
     with open("discord_users.json", "r") as f:
@@ -570,11 +577,11 @@ async def spam_webhook(
             await interaction.followup.send(f"❌ เกิดข้อผิดพลาดในการลบ Webhook: {e}", ephemeral=True)
 
 if __name__ == "__main__":
-    if BOT_TOKEN == "bomdis1_token":
+    if TOKEN = os.getenv("bomdis1_token"):
         print("❌ กรุณาใส่ Token บอทของคุณในตัวแปร BOT_TOKEN!")
     else:
         try:
-            bot.run(BOT_TOKEN)
+            bot.run(TOKEN)
         except discord.LoginFailure:
             print("❌ Token บอทไม่ถูกต้อง!")
         except Exception as e:
