@@ -1,3 +1,5 @@
 nextcord
+discord.py
+aiohttp
 flask
 python-dotenv
