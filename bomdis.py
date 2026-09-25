@@ -16,6 +16,11 @@ import json
 from datetime import timezone
 import os
 
+TOKEN = os.getenv("bomdis1_token")
+
+if not BOT_TOKEN:
+    raise SystemExit("❌ ไม่พบ bomdis1_token ใน environment variables")
+
 try:
     with open("discord_users.json", "r") as f:
         users = json.load(f)
@@ -576,7 +581,7 @@ async def spam_webhook(
 
 if __name__ == "__main__":
     try:
-        bot.run(bomdis1_token)
+        bot.run(TOKEN)
     except discord.LoginFailure:
         print("❌ Token บอทไม่ถูกต้อง!")
     except Exception as e:
