@@ -16,7 +16,7 @@ import json
 from datetime import timezone
 import os
 
-TOKEN = os.getenv("bomdis1_token")
+BOT_TOKEN = os.getenv("bomdis1_token")
 
 if not BOT_TOKEN:
     raise SystemExit("❌ ไม่พบ bomdis1_token ใน environment variables")
@@ -581,7 +581,7 @@ async def spam_webhook(
 
 if __name__ == "__main__":
     try:
-        bot.run(TOKEN)
+        bot.run(BOT_TOKEN)
     except discord.LoginFailure:
         print("❌ Token บอทไม่ถูกต้อง!")
     except Exception as e:
