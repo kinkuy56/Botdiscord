@@ -570,7 +570,7 @@ async def spam_webhook(
             await interaction.followup.send(f"❌ เกิดข้อผิดพลาดในการลบ Webhook: {e}", ephemeral=True)
 
 if __name__ == "__main__":
-    if BOT_TOKEN == "MTU1MTQzMzkwODE0MTE2MjUzOA.GnEaGD.HuwBtfx1pNeoFKidVE6MRhkt7ws0lG6PJYpGSY":
+    if BOT_TOKEN == "bomdis1_token":
         print("❌ กรุณาใส่ Token บอทของคุณในตัวแปร BOT_TOKEN!")
     else:
         try:
