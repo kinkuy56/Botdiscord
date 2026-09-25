@@ -13,9 +13,8 @@ from dotenv import load_dotenv
 # โหลดค่าจากไฟล์ .env
 load_dotenv()
 
-# ดึง Token มาเก็บไว้ในตัวแปร
+# ดึง Token มาเก็บไว้ในตัวแปร (สามารถเปลี่ยนเป็นใส่ Token ตรงๆ ได้เช่น "MTM...")
 TOKEN = os.getenv("waguri_token")
-
 
 owner_user = "jarya_dang"
 COLOR = 0xffb6c1  # สีชมพูอ่อนพาสเทลเข้ากับ Waguri
@@ -35,7 +34,7 @@ intents.guilds = True
 # สร้าง bot
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Guild ID สำหรับ sync (ใช้ Guild ID เดียวกับบอทขายของ)
+# Guild ID สำหรับ sync
 GUILD_ID = 1551460858197053502
 
 
@@ -343,15 +342,7 @@ async def verify_menu(interaction: nextcord.Interaction):
         embed.set_author(name="แหนม")
 
     await interaction.channel.send(embed=embed, view=VerifyView())
-    await interaction.response.send_message(content='[SUCCESS] ส่งเมนูยืนยันตัวตนเรียบร้อย!', ephemeral=True)
-
-
-# ==========================================
-# 🔍 ตรวจสอบหลังสร้าง commands ทั้งหมด
-# ==========================================
-print("=== ตรวจสอบหลังสร้าง commands ทั้งหมด ===")
-for cmd in bot.get_application_commands():
-    print(f"   • /{cmd.name}")
+    await interaction.response.send_message(content='[SUCCESS]ส่งเมนูยืนยันตัวตนเรียบร้อย!', ephemeral=True)
 
 
 # ==========================================
@@ -363,25 +354,12 @@ async def on_ready():
     print(f'Bot App ID: {bot.application_id}')
     print(f'Target Guild ID: {GUILD_ID}')
     
-    # ตรวจสอบ commands ที่ nextcord รู้จัก
-    cmds = bot.get_application_commands()
-    print(f"=== Commands ที่ nextcord รู้จัก: {len(cmds)} ===")
-    for cmd in cmds:
-        print(f"   • /{cmd.name}")
-    
     # ลอง sync แบบ guild
     try:
         result = await bot.sync_application_commands(guild_id=GUILD_ID)
         print(f"✅ Guild sync: {result}")
     except Exception as e:
         print(f"❌ Guild error: {type(e).__name__}: {e}")
-    
-    # ลอง sync global
-    try:
-        result = await bot.sync_application_commands()
-        print(f"✅ Global sync: {result}")
-    except Exception as e:
-        print(f"❌ Global error: {type(e).__name__}: {e}")
 
 
 # ==========================================
@@ -390,8 +368,10 @@ async def on_ready():
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
-        return  # ข้ามไป ไม่ต้อง print
+        return  
     print(f"⚠️ Error: {error}")
 
 
-bot.run(TOKEN)
+if __name__ == "__main__":
+    bot.run(TOKEN)
+                   
