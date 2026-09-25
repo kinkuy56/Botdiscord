@@ -8,7 +8,7 @@ import asyncio
 load_dotenv()
 
 # ดึง Token มาเก็บไว้ในตัวแปร
-TOKEN = os.getenv("ยิงดิส_token")
+TOKEN = os.getenv("bomdis_token")
 
 # -------------------------------------------------------------------
 # วางลิงก์รูปภาพ หรือ GIF ตรงนี้ (ต้องขึ้นต้นด้วย http:// หรือ https://)
