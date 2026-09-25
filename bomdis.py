@@ -1,3 +1,8 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -10,12 +15,6 @@ import re
 import json
 from datetime import timezone
 import os
-
-from dotenv import load_dotenv
-from dotenv import load_dotenv
-
-# โหลดค่าจากไฟล์ .env
-load_dotenv()
 
 try:
     with open("discord_users.json", "r") as f:
@@ -51,7 +50,6 @@ OWNER_ID = "890564632249516043"
 
 # ---------------- ตัวแปรข้อความ ----------------
 
-BOT_TOKEN = "MTU1MTQzMzkwODE0MTE2MjUzOA.GwqvXr.J6B42orXIhylcHUiQFu6HQmcOPCrz6zVKlLRfI"
 
 FUNK_TEXT = """ # พ่อมึงตายแม่มึงตายไอ้สัสโง่เอ๋อขี้ยาติดม้าหลุดเม็ดหำเล็กไอ้เหี้ยอ้วนลูกทรพีแม่มึงเป็นกระหรี่เกิดมาทำเหี้ยไรไอ้ลูกกระหรี่ทำตัวไม่มีประโยชน์ดิสก็กระจอกหัวดิสไม่ทำไรเลยโดนยิงนี้โง่จัดควายก็ควายสมองหมาปัญญาควายสภาพดิสกระจอกดิสโง่ๆควายๆกลับเขมรไปไอ้ตัวลาบเดียวกูเอาข้าวเหนียวจิ้มแม่งสภาพพ่อแม่มึงเย็ดกันยังไงให้ได้ควายแถมลาบเขมรมาด้วยวะแม่มึงหีเท่าโอ่งมังกรหำพ่อมึงก็สั้นดำก็ดำ
 """
@@ -577,12 +575,9 @@ async def spam_webhook(
             await interaction.followup.send(f"❌ เกิดข้อผิดพลาดในการลบ Webhook: {e}", ephemeral=True)
 
 if __name__ == "__main__":
-    if TOKEN = os.getenv("bomdis1_token"):
-        print("❌ กรุณาใส่ Token บอทของคุณในตัวแปร BOT_TOKEN!")
-    else:
-        try:
-            bot.run(TOKEN)
-        except discord.LoginFailure:
-            print("❌ Token บอทไม่ถูกต้อง!")
-        except Exception as e:
-            print(f"❌ เกิดข้อผิดพลาดในการรันบอท: {e}")
+    try:
+        bot.run(bomdis1_token)
+    except discord.LoginFailure:
+        print("❌ Token บอทไม่ถูกต้อง!")
+    except Exception as e:
+        print(f"❌ เกิดข้อผิดพลาดในการรันบอท: {e}")
