@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ดึง Token มาเก็บไว้ในตัวแปร
-token = os.getenv("เควสออโต้_token")
+token = os.getenv("autoq_token")
 
 # ตั้งค่า Bot Intents
 intents = discord.Intents.default()
