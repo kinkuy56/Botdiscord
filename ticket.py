@@ -7,7 +7,7 @@ import asyncio
 # โหลดค่าจากไฟล์ .env
 load_dotenv()
 
-# ดึง Token มาเก็บไว้ในตัวแปร
+# ดึง Token มาเก็บไว้ในตัวแปร (สามารถเปลี่ยนเป็นใส่ Token ตรงๆ ได้เช่น "MTM...")
 TOKEN = os.getenv("ticket_token")
 
 # ตั้งค่า Intents ของบอท (ใช้ nextcord)
