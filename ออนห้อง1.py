@@ -6,12 +6,12 @@ import os
 # โหลดค่าจากไฟล์ .env
 load_dotenv()
 
-# ดึง Token มาเก็บไว้ในตัวแปร
+# ดึง Token มาเก็บไว้ในตัวแปร (เปลี่ยนเป็น momo_token)
 token = os.getenv("mea_token")
 
 # ตรวจสอบว่ามี Token หรือไม่
 if not token:
-    print("❌ ไม่พบ Token ในไฟล์ .env (mea_token)")
+    print("❌ ไม่พบ Token ในไฟล์ .env (momo_token)")
     exit()
 
 intents = nextcord.Intents.default()
@@ -45,7 +45,8 @@ async def on_ready():
             channel = guild.get_channel(BotSever2)
             # ตรวจสอบว่าเป็นห้องเสียงจริงๆ
             if isinstance(channel, nextcord.VoiceChannel):
-                await channel.connect(self_deaf=True, self_mute=False)
+                vc = await channel.connect()
+                await vc.guild.change_voice_state(channel=channel, self_mute=False, self_deaf=True)
                 _has_joined_voice = True
                 print(f"🔊 เข้าห้องเสียงแล้ว: {channel.name}")
             else:
