@@ -358,7 +358,7 @@ class ControlPanelView(nextcord.ui.View):
             print(f"[!] ไม่สามารถเข้าใช้งาน Token ได้: {e}")
 
 # -------------------------------------------------------------------
-# View ปุ่มหน้าหลักสาธารณะ (ให้แอดมินกดเปิดแผงส่วนตัว)
+# View ปุ่มหน้าหลักสาธารณะ (เปิดให้ทุกคนกดได้ทันทีโดยไม่เช็คยศแอดมิน)
 # -------------------------------------------------------------------
 class PublicHubView(nextcord.ui.View):
     def __init__(self):
@@ -366,14 +366,12 @@ class PublicHubView(nextcord.ui.View):
 
     @nextcord.ui.button(label="🎛️ เปิดแผงควบคุมส่วนตัวของคุณ", style=nextcord.ButtonStyle.primary, custom_id="open_private_panel")
     async def open_panel(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
-        if not interaction.user.guild_permissions.administrator:
-            return await interaction.response.send_message("❌ คุณไม่มีสิทธิ์ใช้งานแผงควบคุมนี้ (ต้องเป็นแอดมินเท่านั้น)", ephemeral=True)
-        
+        # เอาเงื่อนไขเช็คยศแอดมินออกแล้ว ทุกคนกดได้
         config = get_user_config(interaction.user.id)
         embed = build_config_embed(config, interaction.user)
         view = ControlPanelView(owner_id=interaction.user.id)
         
-        # ส่งแผงตั้งค่าแบบเห็นคนเดียว (Ephemeral)
+        # ส่งแผงตั้งค่าแบบเห็นคนเดียว (Ephemeral) ข้อมูลจะไม่ปะปนและไม่มีใครเห็น
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 # -------------------------------------------------------------------
@@ -381,6 +379,7 @@ class PublicHubView(nextcord.ui.View):
 # -------------------------------------------------------------------
 @bot.slash_command(name="setup_panel", description="เปิดแผงควบคุม CONFIG PANEL สาธารณะ")
 async def setup_panel(interaction: nextcord.Interaction):
+    # (ถ้าต้องการให้เฉพาะแอดมินพิมพ์คำสั่งเรียกปุ่มตอนแรกได้ ให้คงบล็อกนี้ไว้ แต่ถ้าจะให้ทุกคนพิมพ์คำสั่งเรียกได้ด้วย ให้ลบบรรทัดเช็คสิทธิ์ด้านล่างออกได้เลยครับ)
     if not interaction.user.guild_permissions.administrator:
         return await interaction.response.send_message("❌ คุณไม่มีสิทธิ์ใช้งานคำสั่งนี้ (ต้องเป็นแอดมินเท่านั้น)", ephemeral=True)
     
@@ -404,4 +403,3 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(TOKEN)
-        
