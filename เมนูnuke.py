@@ -17,7 +17,7 @@ PANEL_IMAGE_URL = "https://cdn.discordapp.com/attachments/1168170116383522817/15
 
 intents = nextcord.Intents.default()
 intents.members = True  
-intents.message_content = True  # <--- เพิ่มบรรทัดนี้เข้าไป
+intents.message_content = True  
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # -------------------------------------------------------------------
@@ -189,11 +189,18 @@ class InputBanModal(nextcord.ui.Modal):
         await interaction.response.edit_message(embed=build_config_embed(config, interaction.user))
 
 # -------------------------------------------------------------------
-# View ปุ่มเลือกเมนู
+# View ปุ่มควบคุมส่วนตัว (ล็อกเฉพาะเจ้าของแผง)
 # -------------------------------------------------------------------
 class ControlPanelView(nextcord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
+    def __init__(self, owner_id: int):
+        super().__init__(timeout=180)
+        self.owner_id = owner_id
+
+    async def interaction_check(self, interaction: nextcord.Interaction) -> bool:
+        if interaction.user.id != self.owner_id:
+            await interaction.response.send_message("❌ นี่ไม่ใช่แผงควบคุมส่วนตัวของคุณ! กรุณากดปุ่มที่ข้อความหลักเพื่อเปิดแผงของคุณเอง", ephemeral=True)
+            return False
+        return True
 
     # Row 0
     @nextcord.ui.button(label="🔑 TOKEN บอท", style=nextcord.ButtonStyle.secondary, row=0)
@@ -351,16 +358,44 @@ class ControlPanelView(nextcord.ui.View):
             print(f"[!] ไม่สามารถเข้าใช้งาน Token ได้: {e}")
 
 # -------------------------------------------------------------------
-# Command รัน Panel (ใช้ระบบ slash_command ของ nextcord)
+# View ปุ่มหน้าหลักสาธารณะ (ให้แอดมินกดเปิดแผงส่วนตัว)
 # -------------------------------------------------------------------
-@bot.slash_command(name="setup_panel", description="เปิดแผงควบคุม CONFIG PANEL")
+class PublicHubView(nextcord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @nextcord.ui.button(label="🎛️ เปิดแผงควบคุมส่วนตัวของคุณ", style=nextcord.ButtonStyle.primary, custom_id="open_private_panel")
+    async def open_panel(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+        if not interaction.user.guild_permissions.administrator:
+            return await interaction.response.send_message("❌ คุณไม่มีสิทธิ์ใช้งานแผงควบคุมนี้ (ต้องเป็นแอดมินเท่านั้น)", ephemeral=True)
+        
+        config = get_user_config(interaction.user.id)
+        embed = build_config_embed(config, interaction.user)
+        view = ControlPanelView(owner_id=interaction.user.id)
+        
+        # ส่งแผงตั้งค่าแบบเห็นคนเดียว (Ephemeral)
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+# -------------------------------------------------------------------
+# Command รัน Panel (สาธารณะสำหรับให้ทุกคนเห็นข้อความหลัก)
+# -------------------------------------------------------------------
+@bot.slash_command(name="setup_panel", description="เปิดแผงควบคุม CONFIG PANEL สาธารณะ")
 async def setup_panel(interaction: nextcord.Interaction):
     if not interaction.user.guild_permissions.administrator:
         return await interaction.response.send_message("❌ คุณไม่มีสิทธิ์ใช้งานคำสั่งนี้ (ต้องเป็นแอดมินเท่านั้น)", ephemeral=True)
     
-    config = get_user_config(interaction.user.id)
-    embed = build_config_embed(config, interaction.user)
-    view = ControlPanelView()
+    embed = nextcord.Embed(
+        title="🛡️ ระบบแผงควบคุมการจัดการเซิร์ฟเวอร์",
+        description="กดปุ่มด้านล่างนี้เพื่อ **เปิดแผงควบคุมส่วนตัวของคุณ**\nข้อมูลการตั้งค่าและ Token จะถูกแยกเป็นส่วนตัวเฉพาะคุณเท่านั้น คนอื่นจะไม่เห็นข้อมูลที่คุณกรอก",
+        color=0x2b2d31
+    )
+    if PANEL_IMAGE_URL and PANEL_IMAGE_URL.startswith(("http://", "https://")):
+        try:
+            embed.set_image(url=PANEL_IMAGE_URL)
+        except Exception:
+            pass
+
+    view = PublicHubView()
     await interaction.response.send_message(embed=embed, view=view)
 
 @bot.event
@@ -369,3 +404,4 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(TOKEN)
+        
