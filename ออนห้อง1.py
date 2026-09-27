@@ -7,7 +7,7 @@ import os
 load_dotenv()
 
 # ดึง Token มาเก็บไว้ในตัวแปร (หรือจะใส่ Token จริงๆ เป็นข้อความแทนตรงนี้ก็ได้)
-token = os.getenv("waguri_token")
+token = os.getenv("mea_token")
 
 intents = nextcord.Intents.default()
 intents.message_content = True
